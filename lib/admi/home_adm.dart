@@ -27,11 +27,15 @@ class _HomeAdmState extends State<HomeAdm> {
     getRepartidores();
   }
 
-  // Función para actualizar el repartidor seleccionado para un pedido dado
   void setSelectedRepartidor(int pedidoNumber, String? repartidor) {
     setState(() {
       selectedRepartidores[pedidoNumber] = repartidor;
     });
+    int idRepartidorSeleccionado = repartidoresObtenidos!.indexWhere((repartidorData) => repartidorData['nombre'] == repartidor);
+    print(idRepartidorSeleccionado);
+    int idPedido = pedidosObtenidos![pedidoNumber]['idPedido'];
+    print(idPedido);
+    _asignarPedido(idRepartidorSeleccionado+1, idPedido);
   }
 
   List<dynamic>? pedidosObtenidos;
@@ -40,10 +44,8 @@ class _HomeAdmState extends State<HomeAdm> {
     try {
       var response = await http
           .get(Uri.parse('http://localhost:3000/pedidos/getAllPedidos'));
-      print(response.body);
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        print(jsonResponse['data']);
         setState(() {
           pedidosObtenidos = jsonResponse['data'];
         });
@@ -64,10 +66,8 @@ class _HomeAdmState extends State<HomeAdm> {
     try {
       var response = await http.get(
           Uri.parse('http://localhost:3000/repartidores/obtenerRepartidores'));
-      print(response.body);
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        print(jsonResponse['data']);
         setState(() {
           repartidoresObtenidos = jsonResponse['data'];
         });
@@ -82,14 +82,39 @@ class _HomeAdmState extends State<HomeAdm> {
     }
   }
 
+  Future<void> _asignarPedido(int idRepartidor, int idPedido) async {
+    final url = Uri.parse('http://localhost:3000/pedidos/asignarPedido');
+    final params = {
+      'idRepartidor': idRepartidor,
+      'idPedido': idPedido
+    };
+
+    try {
+      final response = await http.put(
+        url,
+        body: jsonEncode(params),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final responseData = jsonDecode(response.body);
+      print(responseData);
+
+      if (response.statusCode == 200 && responseData['status'] == true) {
+        print('Pedido asignado exitosamente.');
+      } else {
+        print('Error al asignar el pedido: ${responseData['message']}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> getClientData(idCliente) async {
     try {
       var response = await http.get(Uri.parse(
           'http://localhost:3000/clientes/verDetallesCliente/${idCliente}'));
-      print(response.body);
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-        print(jsonResponse['data']);
         return jsonResponse['data'];
       } else {
         print('Request failed with status: ${response.statusCode}.');
@@ -268,8 +293,8 @@ class _HomeAdmState extends State<HomeAdm> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const DetallePedido(
-                  idPedido: 1,
+                builder: (context) => DetallePedido(
+                  idPedido: pedido['idPedido'],
                 ),
               ),
             );

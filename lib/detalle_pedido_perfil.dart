@@ -5,6 +5,7 @@ import 'menu_producto.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class DetallePedido extends StatefulWidget {
   final int idPedido;
@@ -25,6 +26,7 @@ class _DetallePedidoState extends State<DetallePedido> {
   List<int> listaPedidos = [];
   int pedidosRealizados = 0;
   String selectedOption = 'Tipo de Pago'; // Opción seleccionada inicialmente
+  Map<String, dynamic>? detalleEstado;
 
   @override
   void initState() {
@@ -37,6 +39,17 @@ class _DetallePedidoState extends State<DetallePedido> {
     setState(() {
       counter++;
     });
+  }
+
+  String formatDate(String date) {
+    // Convertir la fecha en formato String a DateTime
+    DateTime dateTime = DateTime.parse(date);
+
+    // Formatear la fecha en el formato deseado: "día, mes y año"
+    String formattedDate =
+        DateFormat('dd MMMM y', 'es').format(dateTime.toLocal());
+
+    return formattedDate;
   }
 
   void cargarDatosUsuario() async {
@@ -54,6 +67,29 @@ class _DetallePedidoState extends State<DetallePedido> {
     }
   }
 
+  Future<void> getEstado(int idEstado) async {
+    try {
+      var response = await http.get(
+          Uri.parse('http://localhost:3000/estados/verEstado/${idEstado}'));
+      print(response.body);
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        setState(() {
+          detalleEstado = jsonResponse[
+              'data']; // Actualiza la variable de estado con la información de response
+        });
+      } else {
+        print('Request failed with status: ${response.statusCode}.');
+        // Si userDataString es nulo, inicializa userData como un Map vacío
+        setState(() {
+          detallePedido = {};
+        });
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
   Future<void> getPedido() async {
     try {
       var response = await http.get(Uri.parse(
@@ -65,6 +101,7 @@ class _DetallePedidoState extends State<DetallePedido> {
           detallePedido = jsonResponse[
               'data']; // Actualiza la variable de estado con la información de response
         });
+        getEstado(detallePedido!['estado']);
       } else {
         print('Request failed with status: ${response.statusCode}.');
         // Si userDataString es nulo, inicializa userData como un Map vacío
@@ -161,7 +198,9 @@ class _DetallePedidoState extends State<DetallePedido> {
                 height: 10,
               ),
               Text(
-                detallePedido?.containsKey('fechaPedido') == true ? detallePedido!['fechaPedido']! : '2023-07-24',
+                detallePedido?.containsKey('fechaPedido') == true
+                    ? formatDate(detallePedido!['fechaPedido']!)
+                    : '2023-07-24',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
@@ -187,7 +226,7 @@ class _DetallePedidoState extends State<DetallePedido> {
                     onTap: () {
                       debugPrint('Card tapped.');
                     },
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 300,
                       height: 100,
                       child: Column(
@@ -206,7 +245,9 @@ class _DetallePedidoState extends State<DetallePedido> {
                             height: 5,
                           ),
                           Text(
-                            'Entregado',
+                            detalleEstado?.containsKey('descripcion') == true
+                                ? detalleEstado!['descripcion']!
+                                : 'Hubo un detalle al ver el estado',
                             style: TextStyle(
                                 color: Color.fromARGB(255, 255, 255, 255)),
                           ),
@@ -240,14 +281,18 @@ class _DetallePedidoState extends State<DetallePedido> {
                             height: 20,
                           ),
                           Text(
-                            userData?.containsKey('direccion') == true ? userData!['direccion']! : 'Direccion Desconocida',
+                            userData?.containsKey('direccion') == true
+                                ? userData!['direccion']!
+                                : 'Direccion Desconocida',
                             style: TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255),
                               fontWeight: FontWeight.w900,
                             ),
                           ),
                           Text(
-                            userData?.containsKey('nombre') == true ? userData!['nombre']! : 'Usuario Desconocido',
+                            userData?.containsKey('nombre') == true
+                                ? userData!['nombre']!
+                                : 'Usuario Desconocido',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255),
@@ -257,7 +302,9 @@ class _DetallePedidoState extends State<DetallePedido> {
                             height: 5,
                           ),
                           Text(
-                            detallePedido?.containsKey('calle') == true ? detallePedido!['calle']! : 'Calle no definida',
+                            detallePedido?.containsKey('calle') == true
+                                ? detallePedido!['calle']!
+                                : 'Calle no definida',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255),
@@ -267,7 +314,9 @@ class _DetallePedidoState extends State<DetallePedido> {
                             height: 5,
                           ),
                           Text(
-                            detallePedido?.containsKey('colonia') == true ? detallePedido!['colonia']! : 'Colonia Ilusión',
+                            detallePedido?.containsKey('colonia') == true
+                                ? detallePedido!['colonia']!
+                                : 'Colonia Ilusión',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255),
@@ -277,7 +326,9 @@ class _DetallePedidoState extends State<DetallePedido> {
                             height: 5,
                           ),
                           Text(
-                            detallePedido?.containsKey('numeroTelefono') == true ? detallePedido!['numeroTelefono']! : 'Numero no definido',
+                            detallePedido?.containsKey('numeroTelefono') == true
+                                ? detallePedido!['numeroTelefono']!
+                                : 'Numero no definido',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255),
@@ -320,7 +371,9 @@ class _DetallePedidoState extends State<DetallePedido> {
                             height: 12,
                           ),
                           Text(
-                            detallePedido?.containsKey('tipoPago') == true ? detallePedido!['tipoPago']! : 'Efectivo',
+                            detallePedido?.containsKey('tipoPago') == true
+                                ? detallePedido!['tipoPago']!
+                                : 'Efectivo',
                             style: TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255),
                             ),

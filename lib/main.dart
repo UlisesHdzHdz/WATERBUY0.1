@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
 import 'login/inicio.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 
 void main() {
+  initializeDateFormatting('es', null).then((_) { // Initialize Spanish locale data
+    runApp(MyApp());
+  });
   runApp(const MyApp());
+  
 }
 
 class MyApp extends StatelessWidget {
@@ -25,4 +31,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

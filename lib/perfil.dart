@@ -36,7 +36,7 @@ class _PerfilUserState extends State<PerfilUser> {
       setState(() {
         userData = jsonDecode(userDataString);
       });
-      getPedido();
+      getPedidos();
     } else {
       // Si userDataString es nulo, inicializa userData como un Map vacío
       setState(() {
@@ -45,7 +45,7 @@ class _PerfilUserState extends State<PerfilUser> {
     }
   }
   // repartidores/verPedidosRepartidor/:idRepartidor
-  Future<void> getPedido() async {
+  Future<void> getPedidos() async {
     try {
       print(userData);
       var response = await http.get(Uri.parse(

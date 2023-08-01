@@ -4,6 +4,7 @@ import 'home_adm.dart';
 import 'nofificaciones_adm.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class PerfilUserAdm extends StatefulWidget {
   const PerfilUserAdm({super.key});
@@ -21,6 +22,7 @@ class _PerfilUserAdmState extends State<PerfilUserAdm> {
   void initState() {
     super.initState();
     cargarDatosUsuario();
+    getPedidos();
   }
 
   void cargarDatosUsuario() async {
@@ -35,6 +37,28 @@ class _PerfilUserAdmState extends State<PerfilUserAdm> {
       setState(() {
         userData = {};
       });
+    }
+  }
+
+  List<dynamic>? pedidosObtenidos;
+
+  Future<void> getPedidos() async {
+    try {
+      var response = await http
+          .get(Uri.parse('http://localhost:3000/pedidos/getAllPedidos'));
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        setState(() {
+          pedidosObtenidos = jsonResponse['data'];
+        });
+      } else {
+        print('Request failed with status: ${response.statusCode}.');
+        setState(() {
+          pedidosObtenidos = [];
+        });
+      }
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -178,10 +202,16 @@ class _PerfilUserAdmState extends State<PerfilUserAdm> {
               const SizedBox(
                 height: 30,
               ),
-              // Aquí puedes agregar el contenido de los pedidos realizados sin el DropdownButton
-              buildPedidoCard(1),
-              buildPedidoCard(2),
-              buildPedidoCard(3),
+              if (pedidosObtenidos != null && pedidosObtenidos!.isNotEmpty)
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: pedidosObtenidos!.length,
+                  itemBuilder: (context, index) {
+                    final pedido = pedidosObtenidos![index];
+                    return _buildPedidoCard(index, pedido);
+                  },
+                ),
             ],
           ),
         ],
@@ -189,7 +219,7 @@ class _PerfilUserAdmState extends State<PerfilUserAdm> {
     );
   }
 
-  Widget buildPedidoCard(int pedidoNumber) {
+  Widget _buildPedidoCard(int index, Map<String, dynamic> pedido) {
     return Center(
       child: Card(
         color: const Color.fromARGB(255, 0, 68, 123),
@@ -197,38 +227,33 @@ class _PerfilUserAdmState extends State<PerfilUserAdm> {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
-            // Al tocar el Card, abrimos la página de detalle del pedido correspondiente
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const DetallePedido(
-                  idPedido: 1,
-                ),
-              ),
+                  builder: (context) => DetallePedido(idPedido: pedido['idPedido'])),
             );
           },
           child: SizedBox(
             width: 300,
-            height: 100,
-            child: Column(
+            height: 80,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  height: 20,
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: Text(
+                    '#${pedido['idPedido']}',
+                    style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
+                  ),
+                ),
+                Icon(
+                  Icons.water_drop_outlined,
+                  color: Color.fromARGB(255, 60, 186, 232),
                 ),
                 Text(
-                  '#$pedidoNumber',
+                  'Realizado',
                   style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
                 ),
-                SizedBox(
-                  height: 12,
-                ),
-                Text(
-                  'Pedidos',
-                  style: TextStyle(color: Color.fromARGB(255, 255, 255, 255)),
-                ),
-
-                SizedBox(height: 5),
-                // Aquí puedes agregar cualquier otro contenido del pedido
               ],
             ),
           ),

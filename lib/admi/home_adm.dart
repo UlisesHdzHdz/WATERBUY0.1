@@ -23,7 +23,7 @@ class _HomeAdmState extends State<HomeAdm> {
   @override
   void initState() {
     super.initState();
-    getPedido();
+    getPedidos();
     getRepartidores();
   }
 
@@ -40,7 +40,7 @@ class _HomeAdmState extends State<HomeAdm> {
 
   List<dynamic>? pedidosObtenidos;
 
-  Future<void> getPedido() async {
+  Future<void> getPedidos() async {
     try {
       var response = await http
           .get(Uri.parse('http://localhost:3000/pedidos/getAllPedidos'));

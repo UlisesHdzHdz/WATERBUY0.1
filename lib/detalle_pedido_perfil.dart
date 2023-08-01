@@ -27,6 +27,7 @@ class _DetallePedidoState extends State<DetallePedido> {
   int pedidosRealizados = 0;
   String selectedOption = 'Tipo de Pago'; // Opción seleccionada inicialmente
   Map<String, dynamic>? detalleEstado;
+  Map<String, dynamic>? detalleRepartidor;
 
   @override
   void initState() {
@@ -82,7 +83,29 @@ class _DetallePedidoState extends State<DetallePedido> {
         print('Request failed with status: ${response.statusCode}.');
         // Si userDataString es nulo, inicializa userData como un Map vacío
         setState(() {
-          detallePedido = {};
+          detalleEstado = {};
+        });
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+   Future<void> getRepartidor(int idRepartidor) async {
+    try {
+      var response = await http.get(
+          Uri.parse('http://localhost:3000/repartidores/verRepartidor/${idRepartidor}'));
+      print(response.body);
+      if (response.statusCode == 200) {
+        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        setState(() {
+          detalleRepartidor = jsonResponse[
+              'data']; // Actualiza la variable de estado con la información de response
+        });
+      } else {
+        print('Request failed with status: ${response.statusCode}.');
+        // Si userDataString es nulo, inicializa userData como un Map vacío
+        setState(() {
+          detalleRepartidor = {};
         });
       }
     } catch (e) {
@@ -102,6 +125,8 @@ class _DetallePedidoState extends State<DetallePedido> {
               'data']; // Actualiza la variable de estado con la información de response
         });
         getEstado(detallePedido!['estado']);
+        int idRepartidor = int.parse(detallePedido!['idRepartidor'].toString());
+        getRepartidor(idRepartidor);
       } else {
         print('Request failed with status: ${response.statusCode}.');
         // Si userDataString es nulo, inicializa userData como un Map vacío
@@ -354,7 +379,7 @@ class _DetallePedidoState extends State<DetallePedido> {
                     },
                     child: SizedBox(
                       width: 300,
-                      height: 100,
+                      height: 200,
                       child: Column(
                         children: [
                           SizedBox(
@@ -374,6 +399,24 @@ class _DetallePedidoState extends State<DetallePedido> {
                             detallePedido?.containsKey('tipoPago') == true
                                 ? detallePedido!['tipoPago']!
                                 : 'Efectivo',
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 255, 255, 255),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text(
+                            'Repartidor asignado:',
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 255, 255, 255),
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            detalleRepartidor?.containsKey('nombre') == true
+                                ? detalleRepartidor!['nombre']!
+                                : 'No hay repartidor asignado',
                             style: TextStyle(
                               color: Color.fromARGB(255, 255, 255, 255),
                             ),
